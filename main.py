@@ -1,7 +1,8 @@
+from time import sleep
 from selenium import webdriver
+from functions import break_lines
 from functions import veriry_keywords
 from selenium.webdriver.common.by import By
-from functions import break_lines
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
@@ -10,6 +11,7 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 
 chrome_options = Options()
 chrome_options.add_argument("--headless")
+# chrome_options.add_experimental_option("detach", True)
 
 driver = webdriver.Chrome(
     service=ChromeService(ChromeDriverManager().install()), options=chrome_options
@@ -18,9 +20,10 @@ driver = webdriver.Chrome(
 driver.get("https://aguasdorio.com.br/comunicados/")
 
 try:
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, '//div[@data-component="card-news"]'))
-    )
+    sleep(3)
+    button = driver.find_element(By.XPATH, "//button[text()='Mais Comunicados']")
+    button.click()
+    sleep(3)
 
     div_elements = driver.find_elements(By.XPATH, '//div[@data-component="card-news"]')
 
@@ -40,27 +43,24 @@ try:
                 By.XPATH, './/div[contains(@class, "card-text")]//p'
             )
 
-            if paragraph_elements:
-                paragraph_texts = [p.text for p in paragraph_elements]
-                full_text = break_lines((" ".join(paragraph_texts)), 150)
+            paragraph_texts = [p.text for p in paragraph_elements]
+            full_text = break_lines((" ".join(paragraph_texts)), 150)
 
-                keywords = ["Grande Tijuca" "Tijuca", "Vila Isabel", "Capital"]
+            keywords = ["Grande Tijuca" "Tijuca", "Vila Isabel", "Capital"]
 
-                match = veriry_keywords(keywords, title_text, full_text)
+            match = veriry_keywords(keywords, title_text, full_text)
 
-                if not match:
-                    continue
+            if not match:
+                continue
 
-                print(f"Título: {title_text}")
-                print(f"Data: {date_text}")
-                print(f"Texto: {full_text}")
+            print(f"Título: {title_text}")
+            print(f"Data: {date_text}")
+            print(f"Texto: {full_text}")
 
-                with open("last-results.txt", "a", encoding="utf-8") as file:
-                    file.write(
-                        f"Título: {title_text}\n\nData: {date_text}\n\nTexto: {full_text}\n\n---------------------------\n\n"
-                    )
-            else:
-                print("Nenhum parágrafo encontrado na div com card-text.")
+            with open("last-results.txt", "a", encoding="utf-8") as file:
+                file.write(
+                    f"Título: {title_text}\n\nData: {date_text}\n\nTexto: {full_text}\n\n---------------------------\n\n"
+                )
 
             print("-----")
         except Exception as e:
@@ -68,5 +68,3 @@ try:
 
 except Exception as e:
     print(f"Elemento não encontrado ou ocorreu um erro: {e}")
-finally:
-    driver.quit()
