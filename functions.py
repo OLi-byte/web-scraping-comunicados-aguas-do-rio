@@ -1,4 +1,4 @@
-def adicionar_quebras_de_linha(texto, tamanho_maximo):
+def break_lines(texto, tamanho_maximo):
     palavras = texto.split()
 
     linhas = []
@@ -19,3 +19,10 @@ def adicionar_quebras_de_linha(texto, tamanho_maximo):
         linhas.append(linha_atual)
 
     return "\n".join(linhas)
+
+
+def veriry_keywords(keywords, title, text):
+    for word in keywords:
+        if word in title or word in text:
+            return True
+    return False

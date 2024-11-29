@@ -1,6 +1,7 @@
 from selenium import webdriver
+from functions import veriry_keywords
 from selenium.webdriver.common.by import By
-from quebra_linhas import adicionar_quebras_de_linha
+from functions import break_lines
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
@@ -30,9 +31,6 @@ try:
             )
             title_text = h5_element.text
 
-            if "capital" not in title_text.lower():
-                continue
-
             span_element = div_element.find_element(
                 By.XPATH, './/span[contains(@class, "date")]'
             )
@@ -44,7 +42,15 @@ try:
 
             if paragraph_elements:
                 paragraph_texts = [p.text for p in paragraph_elements]
-                full_text = adicionar_quebras_de_linha((" ".join(paragraph_texts)), 150)
+                full_text = break_lines((" ".join(paragraph_texts)), 150)
+
+                keywords = ["Grande Tijuca" "Tijuca", "Vila Isabel", "Capital"]
+
+                match = veriry_keywords(keywords, title_text, full_text)
+
+                if not match:
+                    continue
+
                 print(f"Título: {title_text}")
                 print(f"Data: {date_text}")
                 print(f"Texto: {full_text}")
