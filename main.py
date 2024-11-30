@@ -79,6 +79,11 @@ def main():
             if not is_older_than_10_days(result["data"])
         ]
 
+        keywords = os.getenv("KEYWORDS").split(",")
+        print("Procurando por...")
+        for word in keywords:
+            print(word)
+
         for div_element in div_elements:
             try:
                 h5_element = div_element.find_element(
@@ -97,8 +102,6 @@ def main():
 
                 paragraph_texts = [p.text for p in paragraph_elements]
                 full_text = break_lines((" ".join(paragraph_texts)), 150)
-
-                keywords = ["Grande Tijuca" "Tijuca", "Vila Isabel", "Capital"]
 
                 match = veriry_keywords(keywords, title_text, full_text)
 
