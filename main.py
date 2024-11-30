@@ -22,17 +22,21 @@ driver = webdriver.Chrome(
 
 
 def load_results():
-    for i in range(2):
+    attempts = 0
+    while attempts <= 4:
         try:
-            sleep(3)
-            button = driver.find_element(
-                By.XPATH, "//button[text()='Mais Comunicados']"
+            button = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable(
+                    (By.XPATH, "//button[text()='Mais Comunicados']")
+                )
             )
+            sleep(2)
             button.click()
-            sleep(3)
             print("Mais resultados carregados")
+            attempts += 1
         except:
-            print("Erro ao carregar mais resultados")
+            print("Botão 'Mais Comunicados' não encontrado.")
+            break
 
 
 def load_last_results():
@@ -107,15 +111,12 @@ def main():
                     "texto": full_text,
                 }
 
-                # Verificar se o título já existe nos resultados
                 if any(result["titulo"] == title_text for result in last_results):
                     print(f"{title_text}... já está nos resultados")
                     continue
 
-                # Adicionar ao novo resultado
                 new_results.append(email)
 
-                # Enviar e-mail
                 send_email(
                     "Comunicados Águas do Rio",
                     f"Título: {title_text}\n\nData: {date_text}\n\nTexto: {full_text}\n\n---------------------------\n\n",
@@ -125,7 +126,6 @@ def main():
                 print(f"Erro ao buscar elementos dentro da div: {e}")
 
         if new_results:
-            # Atualizar arquivo JSON com os novos resultados
             last_results.extend(new_results)
             save_results(last_results)
             print("Arquivo JSON atualizado com novos resultados.")
