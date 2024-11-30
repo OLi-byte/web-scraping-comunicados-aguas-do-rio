@@ -20,18 +20,32 @@ driver = webdriver.Chrome(
 )
 
 
+def load_results():
+    for i in range(2):
+        try:
+            sleep(3)
+            button = driver.find_element(
+                By.XPATH, "//button[text()='Mais Comunicados']"
+            )
+            button.click()
+            sleep(3)
+            print("Mais resultados carregados")
+        except:
+            print("Erro ao carregar mais resultados")
+
+
 def main():
     driver.get("https://aguasdorio.com.br/comunicados/")
+    new_results = []
 
     try:
-        sleep(3)
-        button = driver.find_element(By.XPATH, "//button[text()='Mais Comunicados']")
-        button.click()
-        sleep(3)
+        load_results()
 
         div_elements = driver.find_elements(
             By.XPATH, '//div[@data-component="card-news"]'
         )
+
+        print(f"{len(div_elements)} comunicados carregados")
 
         for div_element in div_elements:
             try:
@@ -59,22 +73,31 @@ def main():
                 if not match:
                     continue
 
-                print(f"Título: {title_text}")
-                print(f"Data: {date_text}")
-                print(f"Texto: {full_text}")
+                email = f"Título: {title_text}\n\nData: {date_text}\n\nTexto: {full_text}\n\n---------------------------\n\n"
 
-                body = f"Título: {title_text}\n\nData: {date_text}\n\nTexto: {full_text}\n\n---------------------------\n\n"
+                try:
+                    with open("last-results.txt", "r", encoding="utf-8") as file:
+                        last_results = file.read()
+                except Exception as e:
+                    print("Últimos resultados não encontrados...")
+                    last_results = ""
 
-                with open("last-results.txt", "a", encoding="utf-8") as file:
-                    file.write(body)
+                if title_text in last_results:
+                    print(f"{title_text[:30]}... já está nos resultados")
+                    continue
 
-                print("-----")
+                new_results.append(email)
 
                 send_email(
-                    "Comunicados Águas do Rio", body, os.getenv("EMAIL_RECEIVER")
+                    "Comunicados Águas do Rio", email, os.getenv("EMAIL_RECEIVER")
                 )
             except Exception as e:
                 print(f"Erro ao buscar elementos dentro da div: {e}")
+
+        if new_results:
+            with open("last-results.txt", "w", encoding="utf-8") as file:
+                file.write("".join(new_results) + last_results)
+            print("Arquivo atualizado com novos resultados.")
 
     except Exception as e:
         print(f"Elemento não encontrado ou ocorreu um erro: {e}")
