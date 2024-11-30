@@ -1,4 +1,6 @@
 import os
+import json
+import datetime
 from time import sleep
 from selenium import webdriver
 from functions import send_email
@@ -13,7 +15,6 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 
 chrome_options = Options()
 chrome_options.add_argument("--headless")
-# chrome_options.add_experimental_option("detach", True)
 
 driver = webdriver.Chrome(
     service=ChromeService(ChromeDriverManager().install()), options=chrome_options
@@ -34,6 +35,27 @@ def load_results():
             print("Erro ao carregar mais resultados")
 
 
+def load_last_results():
+    try:
+        with open("last-results.json", "r", encoding="utf-8") as file:
+            return json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+
+def save_results(results):
+    with open("last-results.json", "w", encoding="utf-8") as file:
+        json.dump(results, file, ensure_ascii=False, indent=4)
+
+
+def is_older_than_10_days(date_text):
+    try:
+        date_obj = datetime.datetime.strptime(date_text, "%d/%m/%Y")
+        return (datetime.datetime.now() - date_obj).days > 10
+    except:
+        return False
+
+
 def main():
     driver.get("https://aguasdorio.com.br/comunicados/")
     new_results = []
@@ -46,6 +68,12 @@ def main():
         )
 
         print(f"{len(div_elements)} comunicados carregados")
+
+        last_results = [
+            result
+            for result in load_last_results()
+            if not is_older_than_10_days(result["data"])
+        ]
 
         for div_element in div_elements:
             try:
@@ -73,31 +101,34 @@ def main():
                 if not match:
                     continue
 
-                email = f"Título: {title_text}\n\nData: {date_text}\n\nTexto: {full_text}\n\n---------------------------\n\n"
+                email = {
+                    "titulo": title_text,
+                    "data": date_text,
+                    "texto": full_text,
+                }
 
-                try:
-                    with open("last-results.txt", "r", encoding="utf-8") as file:
-                        last_results = file.read()
-                except Exception as e:
-                    print("Últimos resultados não encontrados...")
-                    last_results = ""
-
-                if title_text in last_results:
-                    print(f"{title_text[:30]}... já está nos resultados")
+                # Verificar se o título já existe nos resultados
+                if any(result["titulo"] == title_text for result in last_results):
+                    print(f"{title_text}... já está nos resultados")
                     continue
 
+                # Adicionar ao novo resultado
                 new_results.append(email)
 
+                # Enviar e-mail
                 send_email(
-                    "Comunicados Águas do Rio", email, os.getenv("EMAIL_RECEIVER")
+                    "Comunicados Águas do Rio",
+                    f"Título: {title_text}\n\nData: {date_text}\n\nTexto: {full_text}\n\n---------------------------\n\n",
+                    os.getenv("EMAIL_RECEIVER"),
                 )
             except Exception as e:
                 print(f"Erro ao buscar elementos dentro da div: {e}")
 
         if new_results:
-            with open("last-results.txt", "w", encoding="utf-8") as file:
-                file.write("".join(new_results) + last_results)
-            print("Arquivo atualizado com novos resultados.")
+            # Atualizar arquivo JSON com os novos resultados
+            last_results.extend(new_results)
+            save_results(last_results)
+            print("Arquivo JSON atualizado com novos resultados.")
 
     except Exception as e:
         print(f"Elemento não encontrado ou ocorreu um erro: {e}")
