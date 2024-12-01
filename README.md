@@ -66,7 +66,3 @@ Após configurar o arquivo `.env` com suas variáveis, execute o script com o se
 ```bash
 python main.py
 ```
-
-## Licença
-
-Este projeto está licenciado sob a [MIT License](LICENSE).
