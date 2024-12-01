@@ -80,9 +80,13 @@ def main():
         ]
 
         keywords = os.getenv("KEYWORDS").split(",")
-        print("Procurando por...")
-        for word in keywords:
-            print(word)
+        if keywords:
+            print("Procurando por...")
+            for word in keywords:
+                print(word)
+        else:
+            print("Não há palavras chave especificadas")
+            exit()
 
         for div_element in div_elements:
             try:
