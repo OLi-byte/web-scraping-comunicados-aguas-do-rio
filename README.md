@@ -48,6 +48,8 @@ EMAIL_USER=seuemail@example.com
 EMAIL_PASSWORD=sua_senha
 ```
 
+> ⚠️ **Atenção:** Após alterar o arquivo `.env`, certifique-se de reiniciar a aplicação que utiliza essas variáveis. Se o problema persistir, tente reiniciar o editor ou IDE para garantir que as variáveis sejam recarregadas corretamente.
+
 ## E-mail para envio dos comunicados
 
 O e-mail usado para enviar os comunicados precisa ser configurado. Para usar o Gmail, é necessário gerar uma senha de app nas configurações de segurança da sua conta Google.
