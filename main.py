@@ -4,27 +4,30 @@ import datetime
 from time import sleep
 from dotenv import load_dotenv
 from selenium import webdriver
-from functions import send_email
-from functions import break_lines
-from functions import veriry_keywords
+from functions import send_email, break_lines, veriry_keywords
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
 
 chrome_options = Options()
 chrome_options.add_argument("--headless")
+chrome_options.add_argument("--disable-gpu")
+chrome_options.add_argument("--disable-usb-discovery")
 
 driver = webdriver.Chrome(
     service=ChromeService(ChromeDriverManager().install()), options=chrome_options
 )
 
+load_dotenv()
+
 
 def load_results():
     attempts = 0
-    while attempts <= 3:
+    max_attempts = 3
+    while attempts < max_attempts:
         try:
             button = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable(
@@ -33,9 +36,9 @@ def load_results():
             )
             sleep(2)
             button.click()
-            print("Mais resultados carregados")
+            print(f"Mais resultados carregados ({attempts + 1}/{max_attempts})")
             attempts += 1
-        except:
+        except Exception:
             print("Botão 'Mais Comunicados' não encontrado.")
             break
 
@@ -51,97 +54,93 @@ def load_last_results():
 def save_results(results):
     with open("last-results.json", "w", encoding="utf-8") as file:
         json.dump(results, file, ensure_ascii=False, indent=4)
+    print("Arquivo JSON atualizado com novos resultados.")
 
 
 def is_older_than_10_days(date_text):
     try:
         date_obj = datetime.datetime.strptime(date_text, "%d/%m/%Y")
         return (datetime.datetime.now() - date_obj).days > 10
-    except:
+    except ValueError:
         return False
+
+
+def extract_comunicado_data(div_element):
+    try:
+        title = div_element.find_element(
+            By.XPATH, './/h5[contains(@class, "card-title")]'
+        ).text
+        date = div_element.find_element(
+            By.XPATH, './/span[contains(@class, "date")]'
+        ).text
+        paragraphs = div_element.find_elements(
+            By.XPATH, './/div[contains(@class, "card-text")]//p'
+        )
+        full_text = break_lines(" ".join(p.text for p in paragraphs), 150)
+        return {"titulo": title, "data": date, "texto": full_text}
+    except Exception as e:
+        print(f"Erro ao extrair dados da div: {e}")
+        return None
 
 
 def main():
     driver.get("https://aguasdorio.com.br/comunicados/")
+    print("Página carregada: Comunicados Águas do Rio")
+
+    load_results()
+
+    div_elements = driver.find_elements(By.XPATH, '//div[@data-component="card-news"]')
+    print(f"{len(div_elements)} comunicados encontrados.")
+
+    last_results = [
+        result
+        for result in load_last_results()
+        if not is_older_than_10_days(result["data"])
+    ]
+    keywords = os.getenv("KEYWORDS", "").split(", ")
+
+    if not keywords:
+        print("Nenhuma palavra-chave especificada.")
+        return
+
+    print("Procurando por palavras-chave:")
+    for word in keywords:
+        print(f"- {word}")
+
     new_results = []
-    load_dotenv()
 
-    try:
-        load_results()
+    for div_element in div_elements:
+        comunicado_data = extract_comunicado_data(div_element)
 
-        div_elements = driver.find_elements(
-            By.XPATH, '//div[@data-component="card-news"]'
-        )
+        if not comunicado_data:
+            continue
 
-        print(f"{len(div_elements)} comunicados carregados")
+        title = comunicado_data["titulo"]
+        date = comunicado_data["data"]
+        text = comunicado_data["texto"]
 
-        last_results = [
-            result
-            for result in load_last_results()
-            if not is_older_than_10_days(result["data"])
-        ]
+        if any(result["titulo"] == title for result in last_results):
+            print(f"'{title}' já está nos resultados.")
+            continue
 
-        keywords = os.getenv("KEYWORDS").split(", ")
-        if keywords:
-            print("Procurando por...")
-            for word in keywords:
-                print(word)
-        else:
-            print("Não há palavras chave especificadas")
-            exit()
+        if veriry_keywords(keywords, title, text):
+            new_results.append(comunicado_data)
+            send_email(
+                subject="Comunicados Águas do Rio",
+                body=f"Título: {title}\n\nData: {date}\n\nTexto: {text}\n\n---------------------------\n",
+                to_email=os.getenv("EMAIL_RECEIVER"),
+            )
+            print(f"Email enviado: {title}")
 
-        for div_element in div_elements:
-            try:
-                h5_element = div_element.find_element(
-                    By.XPATH, './/h5[contains(@class, "card-title")]'
-                )
-                title_text = h5_element.text
-
-                span_element = div_element.find_element(
-                    By.XPATH, './/span[contains(@class, "date")]'
-                )
-                date_text = span_element.text
-
-                paragraph_elements = div_element.find_elements(
-                    By.XPATH, './/div[contains(@class, "card-text")]//p'
-                )
-
-                paragraph_texts = [p.text for p in paragraph_elements]
-                full_text = break_lines((" ".join(paragraph_texts)), 150)
-
-                match = veriry_keywords(keywords, title_text, full_text)
-
-                if not match:
-                    continue
-
-                email = {
-                    "titulo": title_text,
-                    "data": date_text,
-                    "texto": full_text,
-                }
-
-                if any(result["titulo"] == title_text for result in last_results):
-                    print(f"{title_text}... já está nos resultados")
-                    continue
-
-                new_results.append(email)
-
-                send_email(
-                    "Comunicados Águas do Rio",
-                    f"Título: {title_text}\n\nData: {date_text}\n\nTexto: {full_text}\n\n---------------------------\n\n",
-                    os.getenv("EMAIL_RECEIVER"),
-                )
-            except Exception as e:
-                print(f"Erro ao buscar elementos dentro da div: {e}")
-
-        if new_results:
-            last_results.extend(new_results)
-            save_results(last_results)
-            print("Arquivo JSON atualizado com novos resultados.")
-
-    except Exception as e:
-        print(f"Elemento não encontrado ou ocorreu um erro: {e}")
+    if new_results:
+        last_results.extend(new_results)
+        save_results(last_results)
+    else:
+        print("Nenhum novo comunicado encontrado.")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    finally:
+        driver.quit()
