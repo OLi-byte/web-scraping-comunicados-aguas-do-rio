@@ -2,6 +2,7 @@ import os
 import json
 import datetime
 from time import sleep
+from dotenv import load_dotenv
 from selenium import webdriver
 from functions import send_email
 from functions import break_lines
@@ -23,7 +24,7 @@ driver = webdriver.Chrome(
 
 def load_results():
     attempts = 0
-    while attempts <= 4:
+    while attempts <= 3:
         try:
             button = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable(
@@ -63,6 +64,7 @@ def is_older_than_10_days(date_text):
 def main():
     driver.get("https://aguasdorio.com.br/comunicados/")
     new_results = []
+    load_dotenv()
 
     try:
         load_results()
@@ -79,7 +81,7 @@ def main():
             if not is_older_than_10_days(result["data"])
         ]
 
-        keywords = os.getenv("KEYWORDS").split(",")
+        keywords = os.getenv("KEYWORDS").split(", ")
         if keywords:
             print("Procurando por...")
             for word in keywords:
