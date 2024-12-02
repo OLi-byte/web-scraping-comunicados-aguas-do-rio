@@ -25,7 +25,7 @@ load_dotenv()
 
 def load_results():
     attempts = 0
-    max_attempts = 3
+    max_attempts = 2
     while attempts < max_attempts:
         try:
             button = WebDriverWait(driver, 10).until(
