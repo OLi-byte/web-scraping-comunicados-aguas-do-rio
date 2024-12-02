@@ -26,6 +26,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Passo 4: Executar o script Selenium
+      # Passo 4: Carregar variávies de ambiente
+      - name: Usar Secret como Variável de Ambiente
+        env:
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
+          KEYWORDS: ${{ secrets.KEYWORDS }}
+
+      # Passo 5: Executar o script Selenium
       - name: Executar script Selenium
         run: python main.py
