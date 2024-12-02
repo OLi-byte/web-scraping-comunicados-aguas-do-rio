@@ -2,12 +2,12 @@ name: Executar Selenium Diariamente
 
 on:
   schedule:
-    - cron: "0 15 * * *" # Executa todos os dias às 03:00 UTC (ajuste conforme necessário)
-  workflow_dispatch: # Permite execução manual
+    - cron: "0 15 * * *"  # Executa todos os dias às 15:00 UTC (meio-dia no horário de Brasília)
+  workflow_dispatch:  # Permite execução manual
 
 jobs:
   selenium_job:
-    runs-on: ubuntu-latest # Máquina virtual com Ubuntu
+    runs-on: ubuntu-latest  # Máquina virtual com Ubuntu
 
     steps:
       # Passo 1: Checkout do repositório
@@ -18,7 +18,7 @@ jobs:
       - name: Configurar Python
         uses: actions/setup-python@v3
         with:
-          python-version: "3.13" # Ajuste conforme necessário
+          python-version: "3.13"  # Ajuste conforme necessário
 
       # Passo 3: Instalar dependências do projeto
       - name: Instalar dependências
@@ -26,14 +26,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Passo 4: Carregar variávies de ambiente
-      - name: Usar Secret como Variável de Ambiente
+      # Passo 4: Executar o script Selenium com variáveis de ambiente
+      - name: Executar script Selenium
         env:
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
           KEYWORDS: ${{ secrets.KEYWORDS }}
-
-      # Passo 5: Executar o script Selenium
-      - name: Executar script Selenium
         run: python main.py
