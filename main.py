@@ -75,7 +75,7 @@ def extract_comunicado_data(div_element):
         paragraphs = div_element.find_elements(
             By.XPATH, './/div[contains(@class, "card-text")]//p'
         )
-        full_text = break_lines(" ".join(p.text for p in paragraphs), 150)
+        full_text = " ".join(p.text for p in paragraphs)
         return {"titulo": title, "data": date, "texto": full_text}
     except Exception as e:
         print(f"Erro ao extrair dados da div: {e}")
