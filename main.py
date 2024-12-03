@@ -4,13 +4,13 @@ import datetime
 from time import sleep
 from dotenv import load_dotenv
 from selenium import webdriver
-from functions import send_email, break_lines, veriry_keywords
+from functions import send_email, veriry_keywords
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service as ChromeService
-from webdriver_manager.chrome import ChromeDriverManager
 
 chrome_options = Options()
 chrome_options.add_argument("--headless")
@@ -25,7 +25,7 @@ load_dotenv()
 
 def load_results():
     attempts = 0
-    max_attempts = 3
+    max_attempts = 2
     while attempts < max_attempts:
         try:
             button = WebDriverWait(driver, 10).until(
@@ -42,24 +42,16 @@ def load_results():
             break
 
 
-def load_last_results():
-    try:
-        with open("last-results.json", "r", encoding="utf-8") as file:
-            return json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return []
-
-
 def save_results(results):
     with open("last-results.json", "w", encoding="utf-8") as file:
         json.dump(results, file, ensure_ascii=False, indent=4)
     print("Arquivo JSON atualizado com novos resultados.")
 
 
-def is_older_than_10_days(date_text):
+def is_date_today(date_text):
     try:
-        date_obj = datetime.datetime.strptime(date_text, "%d/%m/%Y")
-        return (datetime.datetime.now() - date_obj).days > 10
+        date_obj = datetime.datetime.strptime(date_text, "%d/%m/%Y").date()
+        return datetime.datetime.now().date() == date_obj
     except ValueError:
         return False
 
@@ -91,11 +83,6 @@ def main():
     div_elements = driver.find_elements(By.XPATH, '//div[@data-component="card-news"]')
     print(f"{len(div_elements)} comunicados encontrados.")
 
-    last_results = [
-        result
-        for result in load_last_results()
-        if not is_older_than_10_days(result["data"])
-    ]
     keywords = os.getenv("KEYWORDS", "").split(", ")
 
     if not keywords:
@@ -105,8 +92,6 @@ def main():
     print("Procurando por palavras-chave:")
     for word in keywords:
         print(f"- {word}")
-
-    new_results = []
 
     for div_element in div_elements:
         comunicado_data = extract_comunicado_data(div_element)
@@ -118,24 +103,16 @@ def main():
         date = comunicado_data["data"]
         text = comunicado_data["texto"]
 
-        if any(result["titulo"] == title for result in last_results):
-            print(f"'{title}' já está nos resultados.")
+        if not is_date_today(date):
             continue
 
         if veriry_keywords(keywords, title, text):
-            new_results.append(comunicado_data)
             send_email(
                 subject="Comunicados Águas do Rio",
                 body=f"Título: {title}\n\nData: {date}\n\nTexto: {text}\n\n---------------------------\n",
                 to_email=os.getenv("EMAIL_RECEIVER"),
             )
             print(f"Email enviado: {title}")
-
-    if new_results:
-        last_results.extend(new_results)
-        save_results(last_results)
-    else:
-        print("Nenhum novo comunicado encontrado.")
 
 
 if __name__ == "__main__":
