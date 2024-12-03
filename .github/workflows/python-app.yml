@@ -3,11 +3,11 @@ name: Executar Selenium Diariamente
 on:
   schedule:
     - cron: "0 22 * * *"
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
   selenium_job:
-    runs-on: ubuntu-latest  
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout do código
@@ -16,7 +16,7 @@ jobs:
       - name: Configurar Python
         uses: actions/setup-python@v3
         with:
-          python-version: "3.13"  
+          python-version: "3.13"
 
       - name: Instalar dependências
         run: |
@@ -30,6 +30,3 @@ jobs:
           EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
           KEYWORDS: ${{ secrets.KEYWORDS }}
         run: python main.py
-
-      - name: Listar arquivos
-        run: ls -alh
