@@ -30,6 +30,3 @@ jobs:
           EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
           KEYWORDS: ${{ secrets.KEYWORDS }}
         run: python main.py
-
-      - name: Listar arquivos
-        run: ls -alh
