@@ -108,11 +108,11 @@ def main():
 
         if veriry_keywords(keywords, title, text):
             send_email(
+                title=title,
                 subject="Comunicados Águas do Rio",
                 body=f"Título: {title}\n\nData: {date}\n\nTexto: {text}\n\n---------------------------\n",
-                to_email=os.getenv("EMAIL_RECEIVER"),
+                to_emails=os.getenv("EMAIL_RECEIVER"),
             )
-            print(f"Email enviado: {title}")
 
 
 if __name__ == "__main__":

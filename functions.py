@@ -11,27 +11,30 @@ def veriry_keywords(keywords, title, text):
     return False
 
 
-def send_email(subject, body, to_email):
+def send_email(title, subject, body, to_emails):
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
     from_email = os.getenv("EMAIL_USER")
     from_password = os.getenv("EMAIL_PASSWORD")
 
-    msg = MIMEMultipart()
-    msg["From"] = from_email
-    msg["To"] = to_email
-    msg["Subject"] = subject
+    to_emails = to_emails.split(", ")
 
-    msg.attach(MIMEText(body, "plain"))
+    for email in to_emails:
+        msg = MIMEMultipart()
+        msg["From"] = from_email
+        msg["To"] = email
+        msg["Subject"] = subject
 
-    try:
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
-        server.login(from_email, from_password)
-        text = msg.as_string()
-        server.sendmail(from_email, to_email, text)
-        print("E-mail enviado com sucesso!")
-    except Exception as e:
-        print(f"Erro ao enviar e-mail: {e}")
-    finally:
-        server.quit()
+        msg.attach(MIMEText(body, "plain"))
+
+        try:
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+            server.login(from_email, from_password)
+            text = msg.as_string()
+            server.sendmail(from_email, to_emails, text)
+            print(f"Email enviado para {email}: {title}")
+        except Exception as e:
+            print(f"Erro ao enviar e-mail para {email}: {e}")
+        finally:
+            server.quit()
