@@ -1,5 +1,6 @@
 import os
 import smtplib
+import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -9,6 +10,14 @@ def veriry_keywords(keywords, title, text):
         if word in title or word in text:
             return True
     return False
+
+
+def is_date_today(date_text):
+    try:
+        date_obj = datetime.datetime.strptime(date_text, "%d/%m/%Y").date()
+        return datetime.datetime.now().date() == date_obj
+    except ValueError:
+        return False
 
 
 def send_email(title, subject, body, to_emails):

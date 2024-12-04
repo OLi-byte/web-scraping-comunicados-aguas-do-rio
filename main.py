@@ -1,14 +1,12 @@
 import os
-import json
-import datetime
 from time import sleep
 from dotenv import load_dotenv
 from selenium import webdriver
-from functions import send_email, veriry_keywords
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
+from functions import send_email, veriry_keywords, is_date_today
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service as ChromeService
 
@@ -40,20 +38,6 @@ def load_results():
         except Exception:
             print("Botão 'Mais Comunicados' não encontrado.")
             break
-
-
-def save_results(results):
-    with open("last-results.json", "w", encoding="utf-8") as file:
-        json.dump(results, file, ensure_ascii=False, indent=4)
-    print("Arquivo JSON atualizado com novos resultados.")
-
-
-def is_date_today(date_text):
-    try:
-        date_obj = datetime.datetime.strptime(date_text, "%d/%m/%Y").date()
-        return datetime.datetime.now().date() == date_obj
-    except ValueError:
-        return False
 
 
 def extract_comunicado_data(div_element):
