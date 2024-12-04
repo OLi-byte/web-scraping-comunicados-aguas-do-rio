@@ -18,8 +18,6 @@ driver = webdriver.Chrome(
     service=ChromeService(ChromeDriverManager().install()), options=chrome_options
 )
 
-load_dotenv()
-
 
 def load_results():
     attempts = 0
@@ -59,6 +57,7 @@ def extract_comunicado_data(div_element):
 
 
 def main():
+    load_dotenv()
     driver.get("https://aguasdorio.com.br/comunicados/")
     print("Página carregada: Comunicados Águas do Rio")
 
